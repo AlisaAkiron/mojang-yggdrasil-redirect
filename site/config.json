@@ -1,0 +1,8 @@
+{
+  "title": "mojang-yggdrasil-redirect",
+  "github": "https://github.com/AlisaAkiron/mojang-yggdrasil-redirect",
+  "locales": [
+    { "dir": "", "lang": "en", "label": "English" },
+    { "dir": "zh-cn", "lang": "zh-CN", "label": "简体中文" }
+  ]
+}

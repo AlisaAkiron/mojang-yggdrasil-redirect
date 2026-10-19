@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  {{- with .Description}}
+  <meta name="description" content="{{.}}">
+  {{- end}}
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  {{- range .Alternates}}
+  <link rel="alternate" hreflang="{{.Lang}}" href="{{.Href}}">
+  {{- end}}
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="{{.Home}}"><img src="/favicon.svg" alt="" width="20" height="20">{{.SiteTitle}}</a>
+    <nav>
+      {{- range .Alternates}}
+      <a href="{{.Href}}" hreflang="{{.Lang}}" lang="{{.Lang}}">{{.Label}}</a>
+      {{- end}}
+      {{- with .GitHub}}
+      <a href="{{.}}">GitHub</a>
+      {{- end}}
+    </nav>
+  </header>
+
+  <main>
+    <h1>{{.Title}}</h1>
+{{.Content}}
+  </main>
+</body>
+</html>

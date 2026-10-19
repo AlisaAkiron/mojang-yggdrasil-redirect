@@ -1,0 +1,7 @@
+.git
+.github
+.direnv
+site/dist/*
+!site/dist/.gitkeep
+*.log
+.DS_Store

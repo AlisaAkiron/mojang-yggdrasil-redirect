@@ -1,0 +1,218 @@
+/* Green-tinted neutrals, grass-green accent, monospace headings with a `#`
+ * prefix, and pixel-notched code blocks / callouts. Follows the system
+ * light/dark preference. */
+
+:root {
+  color-scheme: light dark;
+  --bg: #f6f7f4;
+  --surface: #eef1ea;
+  --border: #dfe3d8;
+  --text: #1f261c;
+  --muted: #5d6759;
+  --accent: #2c7c31;
+  --accent-strong: #1e5c22;
+  --accent-low: #d9ecd4;
+  --caution: #8a5a00;
+  --caution-low: #f6e9cc;
+
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --px: 6px;
+  --notch: polygon(
+    0 var(--px), var(--px) var(--px), var(--px) 0,
+    calc(100% - var(--px)) 0, calc(100% - var(--px)) var(--px), 100% var(--px),
+    100% calc(100% - var(--px)), calc(100% - var(--px)) calc(100% - var(--px)),
+    calc(100% - var(--px)) 100%, var(--px) 100%, var(--px) calc(100% - var(--px)),
+    0 calc(100% - var(--px))
+  );
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12160f;
+    --surface: #1a2016;
+    --border: #2b3424;
+    --text: #dce3d4;
+    --muted: #93a08a;
+    --accent: #3f8f36;
+    --accent-strong: #7fd96c;
+    --accent-low: #1e3319;
+    --caution: #e8b44c;
+    --caution-low: #33290f;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 1rem/1.65 var(--sans);
+}
+
+a {
+  color: var(--accent-strong);
+}
+
+header,
+main {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+}
+
+header .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+header nav {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+h1,
+h2 {
+  font-family: var(--mono);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+h1 {
+  margin-top: 2.5rem;
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  overflow-wrap: anywhere;
+}
+
+h2 {
+  margin-top: 2.5rem;
+  font-size: 1.4rem;
+}
+
+h2::before {
+  content: "# ";
+  color: var(--accent-strong);
+}
+
+/* The paragraph right under the title. */
+main > h1 + p {
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.875em;
+}
+
+:not(pre) > code {
+  padding: 0.1em 0.3em;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+td code {
+  white-space: nowrap;
+}
+
+td:last-child {
+  min-width: 12rem;
+}
+
+pre {
+  margin: 1rem 0;
+  padding: 0.9rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  clip-path: var(--notch);
+  overflow-x: auto;
+  line-height: 1.5;
+}
+
+.callout {
+  margin: 1.5rem 0;
+  padding: 0.75rem 1.1rem;
+  border-left: 4px solid var(--accent);
+  background: var(--accent-low);
+  clip-path: var(--notch);
+}
+
+.callout p {
+  margin: 0.25rem 0;
+}
+
+.callout > strong:first-child {
+  display: block;
+  color: var(--accent-strong);
+  font-family: var(--mono);
+}
+
+.callout.caution {
+  border-color: var(--caution);
+  background: var(--caution-low);
+}
+
+.callout.caution > strong:first-child {
+  color: var(--caution);
+}
+
+.callout pre {
+  background: var(--bg);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  font-family: var(--mono);
+}
+
+/* A closing `---` sets off the page's footnote. */
+main hr {
+  margin-top: 3rem;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+main hr ~ p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+main {
+  padding-bottom: 2rem;
+}
