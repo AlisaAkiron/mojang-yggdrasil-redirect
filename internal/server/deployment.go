@@ -2,27 +2,9 @@ package server
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 )
-
-// Service is the first hostname label that selects an upstream.
-type Service string
-
-// Services lists the proxied services in display order.
-var Services = []Service{"auth", "account", "session", "services", "profiles"}
-
-var Upstreams = map[Service]string{
-	"auth":     "https://authserver.mojang.com",     // -Dminecraft.api.auth.host (legacy login; unused since MC 1.20.2)
-	"account":  "https://api.mojang.com",            // -Dminecraft.api.account.host (player info; unused since MC 1.20.3)
-	"session":  "https://sessionserver.mojang.com",  // -Dminecraft.api.session.host (online-mode join)
-	"services": "https://api.minecraftservices.com", // -Dminecraft.api.services.host (chat reports etc.; since MC 1.16.4)
-	"profiles": "https://api.mojang.com",            // -Dminecraft.api.profiles.host (player info; since authlib 7.0.61)
-}
-
-func isService(name string) bool {
-	_, ok := Upstreams[Service(name)]
-	return ok
-}
 
 // CanonicalHost is the domain baked into the static site at build time; the
 // HTML rewrite swaps it for the serving domain on self-hosted instances.
@@ -35,6 +17,10 @@ type DeploymentModel struct {
 	Flags        []string
 	OneLiner     string
 	VelocityFlag string
+	// AuthlibInjectorURL is the API root for the authlib-injector agent
+	// (pre-1.16 versions, which ignore the minecraft.api.* flags).
+	AuthlibInjectorURL string
+	JavaAgentFlag      string
 }
 
 func (m DeploymentModel) ServiceURL(s Service) string {
@@ -61,5 +47,24 @@ func buildModel(proto, host, forwardedProto, forwardedHost string) DeploymentMod
 	}
 	m.OneLiner = strings.Join(m.Flags, " ")
 	m.VelocityFlag = "-Dmojang.sessionserver=" + m.ServiceURL("session") + "/session/minecraft/hasJoined"
+	m.AuthlibInjectorURL = fmt.Sprintf("%s://%s.%s", m.Proto, AuthlibInjectorLabel, m.Host)
+	m.JavaAgentFlag = "-javaagent:authlib-injector.jar=" + m.AuthlibInjectorURL
 	return m
+}
+
+func modelFrom(r *http.Request) DeploymentModel {
+	proto := "http"
+	if r.TLS != nil {
+		proto = "https"
+	}
+	return buildModel(proto, r.Host, r.Header.Get("X-Forwarded-Proto"), r.Header.Get("X-Forwarded-Host"))
+}
+
+// rewriteHost is the domain the docs should show: the serving domain, as
+// seen by the visitor.
+func rewriteHost(r *http.Request) string {
+	if h := r.Header.Get("X-Forwarded-Host"); h != "" {
+		return h
+	}
+	return r.Host
 }

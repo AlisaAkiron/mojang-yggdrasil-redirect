@@ -33,6 +33,16 @@ A Velocity proxy only needs:
 -Dmojang.sessionserver=https://session.yggdrasil.alisaqaq.moe/session/minecraft/hasJoined
 ```
 
+## Older versions (1.7.10 – 1.15) via authlib-injector {#authlib-injector}
+
+Before 1.16, authlib hardcodes the Mojang URLs and ignores the flags above. For those versions (e.g. 1.7.10 modpacks such as GT New Horizons), use [authlib-injector](https://github.com/yushijinhun/authlib-injector) with `authlib-injector.yggdrasil.alisaqaq.moe` as its API root. Download `authlib-injector.jar` and add this before `-jar`, on the server and/or the client:
+
+```
+-javaagent:authlib-injector.jar=https://authlib-injector.yggdrasil.alisaqaq.moe
+```
+
+This subdomain speaks authlib-injector's API layout (`/authserver`, `/sessionserver`, `/api`, `/minecraftservices`), and every request still goes to Mojang. Players keep their normal Microsoft accounts. The metadata hands authlib-injector Mojang's own signing key, so skins and online-mode verification work exactly as in vanilla. With a proxy token, append it to the URL: `.../<secret>`.
+
 ## Endpoints {#endpoints}
 
 | Mirror | Upstream | JVM property | Notes |

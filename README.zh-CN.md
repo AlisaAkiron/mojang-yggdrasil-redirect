@@ -45,6 +45,16 @@ Velocity 只需要：
 -Dmojang.sessionserver=https://session.yggdrasil.alisaqaq.moe/session/minecraft/hasJoined
 ```
 
+## 旧版本（1.7.10 – 1.15）：使用 authlib-injector
+
+1.16 之前的 authlib 把 Mojang 的地址写死在代码里，会忽略上面的参数。这些版本（例如 GT New Horizons 等 1.7.10 整合包）请使用 [authlib-injector](https://github.com/yushijinhun/authlib-injector)，并以 `authlib-injector.yggdrasil.alisaqaq.moe` 作为 API 地址。下载 `authlib-injector.jar` 后，在服务端和/或客户端的 `-jar` 之前加上：
+
+```
+-javaagent:authlib-injector.jar=https://authlib-injector.yggdrasil.alisaqaq.moe
+```
+
+该子域名使用 authlib-injector 的 API 结构（`/authserver`、`/sessionserver`、`/api`、`/minecraftservices`），所有请求依然转发给 Mojang。玩家照常使用自己的微软账号；元数据中提供的是 Mojang 自己的签名公钥，因此皮肤和正版验证与原版完全一致。启用访问令牌时，请把令牌附加在地址后：`.../<secret>`。
+
 ## 开发
 
 需要 Go 1.27+（`nix develop` / direnv 会自动提供）。
