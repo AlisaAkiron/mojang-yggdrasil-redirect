@@ -4,8 +4,6 @@ English | [简体中文](README.zh-CN.md)
 
 A small Go reverse proxy for the five Mojang services used
 by Minecraft's authlib, for players/servers whose network cannot reach Mojang reliably.
-Based on the approach described in
-[this blog post (in Chinese)](https://blog.fallenbreath.me/zh-CN/2025/minecraft-service-proxy/).
 
 Each service is served from its own subdomain; the first hostname label selects the
 upstream and the path is forwarded unchanged.
@@ -141,3 +139,14 @@ before forwarding, so Mojang only sees this host's egress IP. The process logs o
 proxy errors (a JSON `proxy_error` line) to stdout; it keeps no request log. Note that
 `hasJoined` request URLs contain `username`/`serverId` query parameters, so avoid adding
 verbose access logging in your reverse proxy if that matters to you.
+
+## Credits
+
+The ideas behind this project come from other creators:
+
+- **Mojang services proxy** (`yggdrasil` module) — Fallen_Breath,
+  [Minecraft 连不上认证 Mojang 认证服务器的一种解决方案：HTTP 转发](https://blog.fallenbreath.me/zh-CN/2025/minecraft-service-proxy/)
+  (in Chinese).
+- **Prism Launcher metadata via BMCLAPI** (`prism-meta` module) — SheepYhangCN,
+  [让 Prism Launcher 使用 BMCLAPI](https://blog.sheepyuhang.top/post/prism-meta-bmclapi/) (in Chinese);
+  the rewrite rules are ported from [prism-meta-bmclapi](https://github.com/SheepYhangCN/prism-meta-bmclapi) (MIT).

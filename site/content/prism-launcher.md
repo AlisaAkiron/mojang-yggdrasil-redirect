@@ -40,6 +40,6 @@ On an instance with a [proxy token](/#self-hosting), put it after the host:
 https://prism-meta.yggdrasil.example.com/<secret>/
 ```
 
----
+## Credits {#credits}
 
-Ported from [prism-meta-bmclapi](https://github.com/SheepYhangCN/prism-meta-bmclapi) by SheepYhangCN (MIT).
+- **Prism Launcher metadata via BMCLAPI** — SheepYhangCN, [让 Prism Launcher 使用 BMCLAPI](https://blog.sheepyuhang.top/post/prism-meta-bmclapi/) (in Chinese); the rewrite rules are ported from [prism-meta-bmclapi](https://github.com/SheepYhangCN/prism-meta-bmclapi) (MIT).

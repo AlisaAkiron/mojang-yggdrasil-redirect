@@ -3,7 +3,7 @@
 [English](README.md) | 简体中文
 
 一个 Go 反向代理，覆盖 Minecraft authlib 使用的五项 Mojang 服务，供网络无法稳定访问
-Mojang 的玩家与服务器使用。实现思路来自[这篇博客文章](https://blog.fallenbreath.me/zh-CN/2025/minecraft-service-proxy/)。
+Mojang 的玩家与服务器使用。
 
 每项服务都通过独立的子域名提供：主机名的第一个标签决定上游服务，请求路径原样转发。
 
@@ -129,3 +129,13 @@ TLS 证书必须覆盖二级通配符 `*.yggdrasil.example.com`（区域级的�
 只能看到本机的出口 IP。进程仅向 stdout 记录代理错误（一行 JSON 格式的 `proxy_error`），不保留
 任何请求日志。注意：`hasJoined` 请求的 URL 中包含 `username`/`serverId` 查询参数——如果在意
 这一点，请避免在反向代理中开启详细的访问日志。
+
+## 致谢
+
+本项目的思路来自其他创作者：
+
+- **Mojang 服务代理**（`yggdrasil` 模块）——Fallen_Breath，
+  [Minecraft 连不上认证 Mojang 认证服务器的一种解决方案：HTTP 转发](https://blog.fallenbreath.me/zh-CN/2025/minecraft-service-proxy/)。
+- **Prism Launcher 元数据改用 BMCLAPI**（`prism-meta` 模块）——SheepYhangCN，
+  [让 Prism Launcher 使用 BMCLAPI](https://blog.sheepyuhang.top/post/prism-meta-bmclapi/)；
+  替换规则移植自 [prism-meta-bmclapi](https://github.com/SheepYhangCN/prism-meta-bmclapi)（MIT）。

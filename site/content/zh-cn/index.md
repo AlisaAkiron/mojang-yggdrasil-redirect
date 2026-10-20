@@ -75,6 +75,9 @@ TLS 证书必须覆盖二级通配符 `*.yggdrasil.example.com`（区域级的�
 
 转发前会移除可识别客户端的请求头（`CF-Connecting-IP`、`X-Forwarded-*` 等），因此 Mojang 只能看到本机的出口 IP。进程仅向 stdout 记录代理错误，不保留任何请求日志。注意：`hasJoined` 请求的 URL 中包含 `username` 与 `serverId` 查询参数——如果在意这一点，请避免在反向代理中开启详细的访问日志。
 
----
+## 致谢 {#credits}
 
-实现思路来自[这篇博客文章](https://blog.fallenbreath.me/zh-CN/2025/minecraft-service-proxy/)。
+本项目的思路来自其他创作者：
+
+- **Mojang 服务代理**——Fallen_Breath，[Minecraft 连不上认证 Mojang 认证服务器的一种解决方案：HTTP 转发](https://blog.fallenbreath.me/zh-CN/2025/minecraft-service-proxy/)。
+- **Prism Launcher 元数据改用 BMCLAPI**——SheepYhangCN，[让 Prism Launcher 使用 BMCLAPI](https://blog.sheepyuhang.top/post/prism-meta-bmclapi/)；替换规则移植自 [prism-meta-bmclapi](https://github.com/SheepYhangCN/prism-meta-bmclapi)（MIT）。

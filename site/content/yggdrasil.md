@@ -56,3 +56,7 @@ On an instance with a [proxy token](/#self-hosting), append the token to every f
 ```
 
 For Velocity: `-Dmojang.sessionserver=https://session.yggdrasil.example.com/<secret>/session/minecraft/hasJoined`.
+
+## Credits {#credits}
+
+- **Mojang services proxy** — Fallen_Breath, [Minecraft 连不上认证 Mojang 认证服务器的一种解决方案：HTTP 转发](https://blog.fallenbreath.me/zh-CN/2025/minecraft-service-proxy/) (in Chinese).

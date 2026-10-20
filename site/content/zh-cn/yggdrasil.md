@@ -56,3 +56,7 @@ Velocity 代理只需要：
 ```
 
 Velocity：`-Dmojang.sessionserver=https://session.yggdrasil.example.com/<secret>/session/minecraft/hasJoined`。
+
+## 致谢 {#credits}
+
+- **Mojang 服务代理**——Fallen_Breath，[Minecraft 连不上认证 Mojang 认证服务器的一种解决方案：HTTP 转发](https://blog.fallenbreath.me/zh-CN/2025/minecraft-service-proxy/)。

@@ -40,6 +40,6 @@ description: 让 Prism Launcher 使用 prism-meta.yggdrasil.alisaqaq.moe，从 B
 https://prism-meta.yggdrasil.example.com/<secret>/
 ```
 
----
+## 致谢 {#credits}
 
-移植自 SheepYhangCN 的 [prism-meta-bmclapi](https://github.com/SheepYhangCN/prism-meta-bmclapi)（MIT）。
+- **Prism Launcher 元数据改用 BMCLAPI**——SheepYhangCN，[让 Prism Launcher 使用 BMCLAPI](https://blog.sheepyuhang.top/post/prism-meta-bmclapi/)；替换规则移植自 [prism-meta-bmclapi](https://github.com/SheepYhangCN/prism-meta-bmclapi)（MIT）。
