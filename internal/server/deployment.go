@@ -21,6 +21,8 @@ type DeploymentModel struct {
 	// (pre-1.16 versions, which ignore the minecraft.api.* flags).
 	AuthlibInjectorURL string
 	JavaAgentFlag      string
+	// PrismMetaURL is the Meta URL for Prism Launcher's API settings.
+	PrismMetaURL string
 }
 
 func (m DeploymentModel) ServiceURL(s Service) string {
@@ -49,6 +51,7 @@ func buildModel(proto, host, forwardedProto, forwardedHost string) DeploymentMod
 	m.VelocityFlag = "-Dmojang.sessionserver=" + m.ServiceURL("session") + "/session/minecraft/hasJoined"
 	m.AuthlibInjectorURL = fmt.Sprintf("%s://%s.%s", m.Proto, AuthlibInjectorLabel, m.Host)
 	m.JavaAgentFlag = "-javaagent:authlib-injector.jar=" + m.AuthlibInjectorURL
+	m.PrismMetaURL = fmt.Sprintf("%s://%s.%s/", m.Proto, PrismMetaLabel, m.Host)
 	return m
 }
 

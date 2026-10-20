@@ -11,55 +11,10 @@ Each service is served from its own subdomain; the first hostname label selects 
 upstream and the path is forwarded unchanged.
 
 > [!TIP]
-> **A public instance is live at `yggdrasil.alisaqaq.moe`** — hosted on my own server and free
-> for anyone to use. Just add the JVM flags below; no setup required. Prefer to run your
-> own? See [Self-hosting](#self-hosting-docker) to deploy with your own domain.
-
-## Endpoints
-
-| Mirror | Upstream | JVM property | Notes |
-| --- | --- | --- | --- |
-| `auth.yggdrasil.alisaqaq.moe` | `https://authserver.mojang.com` | `minecraft.api.auth.host` | Legacy login; unused since MC 1.20.2 |
-| `account.yggdrasil.alisaqaq.moe` | `https://api.mojang.com` | `minecraft.api.account.host` | Player info; unused since MC 1.20.3 |
-| `session.yggdrasil.alisaqaq.moe` | `https://sessionserver.mojang.com` | `minecraft.api.session.host` | Online-mode join verification |
-| `services.yggdrasil.alisaqaq.moe` | `https://api.minecraftservices.com` | `minecraft.api.services.host` | Chat reports etc.; since MC 1.16.4 |
-| `profiles.yggdrasil.alisaqaq.moe` | `https://api.mojang.com` | `minecraft.api.profiles.host` | Player info; since authlib 7.0.61 |
-
-`https://yggdrasil.alisaqaq.moe/` (the base domain) serves plain HTML
-docs pages for browsers (English / 简体中文, light-auto-dark theme)
-with ready-to-copy JVM flags; `curl` gets the same info as plain text. Self-hosted
-instances automatically show their own domain in the docs — the server rewrites the
-canonical domain to the serving host. Unknown endpoints get a JSON 404; upstream
-failures get a JSON 502.
-
-## Usage (MC 1.16+, client or server)
-
-Add these JVM flags before `-jar` (they point at the public instance; for a self-hosted
-one, swap in your own domain):
-
-```
--Dminecraft.api.auth.host=https://auth.yggdrasil.alisaqaq.moe
--Dminecraft.api.account.host=https://account.yggdrasil.alisaqaq.moe
--Dminecraft.api.session.host=https://session.yggdrasil.alisaqaq.moe
--Dminecraft.api.services.host=https://services.yggdrasil.alisaqaq.moe
--Dminecraft.api.profiles.host=https://profiles.yggdrasil.alisaqaq.moe
-```
-
-Velocity only needs:
-
-```
--Dmojang.sessionserver=https://session.yggdrasil.alisaqaq.moe/session/minecraft/hasJoined
-```
-
-## Older versions (1.7.10 – 1.15) via authlib-injector
-
-Before 1.16, authlib hardcodes the Mojang URLs and ignores the flags above. For those versions (e.g. 1.7.10 modpacks such as GT New Horizons), use [authlib-injector](https://github.com/yushijinhun/authlib-injector) with `authlib-injector.yggdrasil.alisaqaq.moe` as its API root. Download `authlib-injector.jar` and add this before `-jar`, on the server and/or the client:
-
-```
--javaagent:authlib-injector.jar=https://authlib-injector.yggdrasil.alisaqaq.moe
-```
-
-This subdomain speaks authlib-injector's API layout (`/authserver`, `/sessionserver`, `/api`, `/minecraftservices`), and every request still goes to Mojang. Players keep their normal Microsoft accounts. The metadata hands authlib-injector Mojang's own signing key, so skins and online-mode verification work exactly as in vanilla. With a proxy token, append it to the URL: `.../<secret>`.
+> **A public instance is live at [`yggdrasil.alisaqaq.moe`](https://yggdrasil.alisaqaq.moe/)** — hosted on
+> my own server and free for anyone to use. Visit it for the endpoint list and ready-to-copy
+> setup instructions (JVM flags, authlib-injector, Prism Launcher). Prefer to run your own?
+> See [Self-hosting](#self-hosting-docker) to deploy with your own domain.
 
 ## Development
 
@@ -133,6 +88,8 @@ services:
   mojang-yggdrasil-redirect:
     image: ghcr.io/alisaakiron/mojang-yggdrasil-redirect:latest
     restart: unless-stopped
+    environment:
+      - "ENABLE_MODULE=yggdrasil,authlib-injector,prism-meta"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.yggdrasil.rule=Host(`yggdrasil.example.com`) || Host(`*.yggdrasil.example.com`)"
@@ -144,6 +101,16 @@ services:
 The TLS cert must cover the second-level wildcard `*.yggdrasil.example.com` (a zone's universal
 `*.example.com` cert does not) — obtain it with a DNS-01 cert resolver, e.g. add
 `traefik.http.routers.yggdrasil.tls.certresolver=<resolver>`.
+
+Every feature is a module, and **all modules are disabled by default** — list the ones you want, comma-separated, in `ENABLE_MODULE`:
+
+| Module | Subdomains |
+| --- | --- |
+| `yggdrasil` | `auth`, `account`, `session`, `services`, `profiles` |
+| `authlib-injector` | `authlib-injector` |
+| `prism-meta` | `prism-meta` |
+
+A disabled module's subdomains return the JSON 404, and the service refuses to start with no modules enabled or an unknown module name.
 
 Prefer a proxy-only instance? Set `DISABLE_LANDING_PAGE=1` in the container environment
 and the base domain serves no docs at all — `/` returns the JSON 404 like any unknown

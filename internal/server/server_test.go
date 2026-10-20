@@ -36,7 +36,15 @@ func newTestSite() fs.FS {
 	}
 }
 
+// newTestApp enables every module unless cfg.Modules is set (pass an empty
+// map to disable them all).
 func newTestApp(t *testing.T, cfg Config, up *upstream) *Server {
+	if cfg.Modules == nil {
+		cfg.Modules = map[Module]bool{}
+		for _, m := range Modules {
+			cfg.Modules[m] = true
+		}
+	}
 	if up != nil {
 		cfg.Upstreams = map[Service]string{}
 		for _, s := range Services {
@@ -148,4 +156,39 @@ func captureLog(t *testing.T) *strings.Builder {
 	log.SetOutput(&b)
 	t.Cleanup(func() { log.SetOutput(prev) })
 	return &b
+}
+
+func TestModulesGateSubdomains(t *testing.T) {
+	up := newUpstream(t)
+	app := newTestApp(t, Config{Modules: map[Module]bool{ModuleAuthlibInjector: true}}, up)
+
+	for host, want := range map[string]int{
+		"session.yggdrasil.example.com":          http.StatusNotFound,
+		"prism-meta.yggdrasil.example.com":       http.StatusNotFound,
+		"authlib-injector.yggdrasil.example.com": http.StatusNoContent,
+	} {
+		up.last = nil
+		w := do(app, http.MethodGet, "/sessionserver/session/minecraft/hasJoined", map[string]string{"Host": host})
+		if w.Code != want || (want == http.StatusNotFound) != (up.last == nil) {
+			t.Errorf("%s: status = %d, want %d", host, w.Code, want)
+		}
+	}
+
+	w := do(app, http.MethodGet, "/", map[string]string{"Host": "yggdrasil.example.com"})
+	if body := w.Body.String(); strings.Contains(body, "-Dminecraft.api") || strings.Contains(body, "prism-meta") || !strings.Contains(body, "-javaagent:") {
+		t.Errorf("usage text lists disabled modules: %s", body)
+	}
+}
+
+func TestParseModules(t *testing.T) {
+	got, err := ParseModules(" Yggdrasil, ,prism-meta,")
+	if err != nil || len(got) != 2 || !got[ModuleYggdrasil] || !got[ModulePrismMeta] {
+		t.Errorf("got %v, %v", got, err)
+	}
+	if got, err := ParseModules(""); err != nil || len(got) != 0 {
+		t.Errorf("empty: got %v, %v", got, err)
+	}
+	if _, err := ParseModules("yggdrasil,bogus"); err == nil {
+		t.Error("unknown module accepted")
+	}
 }

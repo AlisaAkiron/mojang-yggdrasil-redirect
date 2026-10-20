@@ -21,7 +21,15 @@ import (
 func main() {
 	log.SetFlags(0)
 
+	modules, err := server.ParseModules(os.Getenv("ENABLE_MODULE"))
+	if err != nil {
+		log.Fatalf("mojang-yggdrasil-redirect: ENABLE_MODULE: %v", err)
+	}
+	if len(modules) == 0 {
+		log.Fatal("mojang-yggdrasil-redirect: no modules enabled; set ENABLE_MODULE, e.g. yggdrasil,authlib-injector,prism-meta")
+	}
 	cfg := server.Config{
+		Modules:            modules,
 		ProxyToken:         os.Getenv("PROXY_TOKEN"),
 		DisableLandingPage: slices.Contains([]string{"1", "true", "yes"}, strings.ToLower(os.Getenv("DISABLE_LANDING_PAGE"))),
 		Site:               site.Dist(),
@@ -48,6 +56,13 @@ func main() {
 		_ = srv.Shutdown(shutdownCtx)
 	}()
 
+	var enabled []string
+	for _, m := range server.Modules {
+		if modules[m] {
+			enabled = append(enabled, string(m))
+		}
+	}
+	log.Printf("mojang-yggdrasil-redirect: enabled modules: %s", strings.Join(enabled, ", "))
 	log.Printf("mojang-yggdrasil-redirect listening on http://%s", addr)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)

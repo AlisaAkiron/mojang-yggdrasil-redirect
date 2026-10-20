@@ -1,61 +1,21 @@
 ---
 title: mojang-yggdrasil-redirect
-description: A reverse proxy for the five Mojang services used by Minecraft's authlib — for players and servers whose network cannot reach Mojang reliably.
+description: Mirrors of the Mojang services used by Minecraft's authlib, plus Prism Launcher metadata with BMCLAPI downloads — for players and servers whose network cannot reach Mojang reliably.
 ---
 
-A reverse proxy for the five Mojang services used by Minecraft's authlib — for players and servers whose network cannot reach Mojang reliably. Each service is served from its own subdomain of `yggdrasil.alisaqaq.moe`, and the request path is forwarded unchanged.
+Mirrors for players and servers whose network cannot reach Mojang reliably: the five Mojang services used by Minecraft's authlib, an [authlib-injector](https://github.com/yushijinhun/authlib-injector) endpoint for older versions, and Prism Launcher metadata that downloads from BMCLAPI. Each is served from its own subdomain of `yggdrasil.alisaqaq.moe`.
 
 :::tip
-A public instance is live at `yggdrasil.alisaqaq.moe` — free for anyone to use. Add the JVM flags below and you're done; nothing else to set up. Prefer your own domain? See [Self-hosting](#self-hosting).
+A public instance is live at `yggdrasil.alisaqaq.moe` — free for anyone to use, nothing to set up. Pick a guide below. Prefer your own domain? See [Self-hosting](#self-hosting).
 :::
 
-## Quick start {#quick-start}
+## Guides {#guides}
 
-Add these JVM flags before `-jar` (Minecraft 1.16+, client or server):
-
-```
--Dminecraft.api.auth.host=https://auth.yggdrasil.alisaqaq.moe
--Dminecraft.api.account.host=https://account.yggdrasil.alisaqaq.moe
--Dminecraft.api.session.host=https://session.yggdrasil.alisaqaq.moe
--Dminecraft.api.services.host=https://services.yggdrasil.alisaqaq.moe
--Dminecraft.api.profiles.host=https://profiles.yggdrasil.alisaqaq.moe
-```
-
-As a one-liner:
-
-```
--Dminecraft.api.auth.host=https://auth.yggdrasil.alisaqaq.moe -Dminecraft.api.account.host=https://account.yggdrasil.alisaqaq.moe -Dminecraft.api.session.host=https://session.yggdrasil.alisaqaq.moe -Dminecraft.api.services.host=https://services.yggdrasil.alisaqaq.moe -Dminecraft.api.profiles.host=https://profiles.yggdrasil.alisaqaq.moe
-```
-
-A Velocity proxy only needs:
-
-```
--Dmojang.sessionserver=https://session.yggdrasil.alisaqaq.moe/session/minecraft/hasJoined
-```
-
-## Older versions (1.7.10 – 1.15) via authlib-injector {#authlib-injector}
-
-Before 1.16, authlib hardcodes the Mojang URLs and ignores the flags above. For those versions (e.g. 1.7.10 modpacks such as GT New Horizons), use [authlib-injector](https://github.com/yushijinhun/authlib-injector) with `authlib-injector.yggdrasil.alisaqaq.moe` as its API root. Download `authlib-injector.jar` and add this before `-jar`, on the server and/or the client:
-
-```
--javaagent:authlib-injector.jar=https://authlib-injector.yggdrasil.alisaqaq.moe
-```
-
-This subdomain speaks authlib-injector's API layout (`/authserver`, `/sessionserver`, `/api`, `/minecraftservices`), and every request still goes to Mojang. Players keep their normal Microsoft accounts. The metadata hands authlib-injector Mojang's own signing key, so skins and online-mode verification work exactly as in vanilla. With a proxy token, append it to the URL: `.../<secret>`.
-
-## Endpoints {#endpoints}
-
-| Mirror | Upstream | JVM property | Notes |
-| --- | --- | --- | --- |
-| `auth.yggdrasil.alisaqaq.moe` | `authserver.mojang.com` | `minecraft.api.auth.host` | Legacy login; unused since MC 1.20.2 |
-| `account.yggdrasil.alisaqaq.moe` | `api.mojang.com` | `minecraft.api.account.host` | Player info; unused since MC 1.20.3 |
-| `session.yggdrasil.alisaqaq.moe` | `sessionserver.mojang.com` | `minecraft.api.session.host` | Online-mode join verification |
-| `services.yggdrasil.alisaqaq.moe` | `api.minecraftservices.com` | `minecraft.api.services.host` | Chat reports etc.; since MC 1.16.4 |
-| `profiles.yggdrasil.alisaqaq.moe` | `api.mojang.com` | `minecraft.api.profiles.host` | Player info; since authlib 7.0.61 |
-
-## How it works {#how-it-works}
-
-The first label of the hostname selects the upstream: a request to `session.yggdrasil.alisaqaq.moe/session/minecraft/hasJoined` is forwarded to `sessionserver.mojang.com/session/minecraft/hasJoined`, with path and query untouched. Unknown endpoints get a JSON 404; upstream failures get a JSON 502.
+| Guide | Use it for | Subdomain |
+| --- | --- | --- |
+| [Mojang services](/yggdrasil/) | Minecraft 1.16+ clients and servers, Velocity | `auth`, `account`, `session`, `services`, `profiles` |
+| [authlib-injector](/authlib-injector/) | Minecraft 1.7.10 – 1.15 (e.g. GT New Horizons) | `authlib-injector` |
+| [Prism Launcher](/prism-launcher/) | Faster game, library and mod loader downloads in Prism | `prism-meta` |
 
 ## Self-hosting {#self-hosting}
 
@@ -85,6 +45,8 @@ services:
   mojang-yggdrasil-redirect:
     image: ghcr.io/alisaakiron/mojang-yggdrasil-redirect:latest
     restart: unless-stopped
+    environment:
+      - "ENABLE_MODULE=yggdrasil,authlib-injector,prism-meta"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.yggdrasil.rule=Host(`yggdrasil.example.com`) || Host(`*.yggdrasil.example.com`)"
@@ -95,15 +57,19 @@ services:
 
 The TLS certificate must cover the second-level wildcard `*.yggdrasil.example.com` (a zone's universal `*.example.com` certificate does not) — obtain it with a DNS-01 cert resolver, e.g. add `traefik.http.routers.yggdrasil.tls.certresolver=<resolver>`.
 
+Every feature is a module, and **all modules are disabled by default** — list the ones you want, comma-separated, in `ENABLE_MODULE`:
+
+| Module | Subdomains |
+| --- | --- |
+| [`yggdrasil`](/yggdrasil/) | `auth`, `account`, `session`, `services`, `profiles` |
+| [`authlib-injector`](/authlib-injector/) | `authlib-injector` |
+| [`prism-meta`](/prism-launcher/) | `prism-meta` |
+
+A disabled module's subdomains return the JSON 404, and the service refuses to start with no modules enabled or an unknown module name.
+
 Prefer a proxy-only instance? Set `DISABLE_LANDING_PAGE=1` in the container environment and the base domain serves no docs at all — `/` returns the JSON 404 like any unknown endpoint.
 
-For a private instance, set `PROXY_TOKEN=<secret>` (a long, URL-safe value) and append it to every flag as a path suffix — authlib adds its request paths after it:
-
-```
--Dminecraft.api.session.host=https://session.yggdrasil.example.com/<secret>
-```
-
-The proxy validates and strips the first path segment; wrong or missing tokens get the same JSON 404 as unknown endpoints, and the `Authorization` header passes through untouched so Mojang-Bearer routes keep working. Configuring a token disables the landing page automatically. The token rides in request URLs, so keep reverse-proxy access logging off (see [Privacy](#privacy)).
+For a private instance, set `PROXY_TOKEN=<secret>` (a long, URL-safe value). Every request must then carry the token as the first path segment — each guide shows where it goes. The proxy validates and strips it; wrong or missing tokens get the same JSON 404 as unknown endpoints. Configuring a token disables the landing page automatically. The token rides in request URLs, so keep reverse-proxy access logging off (see [Privacy](#privacy)).
 
 ## Privacy {#privacy}
 

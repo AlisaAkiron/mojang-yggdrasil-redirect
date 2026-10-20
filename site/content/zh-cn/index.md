@@ -1,61 +1,21 @@
 ---
 title: mojang-yggdrasil-redirect
-description: 为网络无法稳定访问 Mojang 的玩家与服务器提供的 Minecraft authlib 五项 Mojang 服务反向代理。
+description: Minecraft authlib 所需 Mojang 服务的镜像，以及使用 BMCLAPI 下载的 Prism Launcher 元数据——为网络无法稳定访问 Mojang 的玩家与服务器准备。
 ---
 
-为网络无法稳定访问 Mojang 的玩家与服务器准备的反向代理，覆盖 Minecraft authlib 使用的五项 Mojang 服务。每项服务都通过 `yggdrasil.alisaqaq.moe` 的独立子域名提供，请求路径原样转发。
+为网络无法稳定访问 Mojang 的玩家与服务器准备的镜像：Minecraft authlib 使用的五项 Mojang 服务、面向旧版本的 [authlib-injector](https://github.com/yushijinhun/authlib-injector) 端点，以及从 BMCLAPI 下载的 Prism Launcher 元数据。每项功能都通过 `yggdrasil.alisaqaq.moe` 的独立子域名提供。
 
 :::tip[提示]
-公共实例已上线：`yggdrasil.alisaqaq.moe`，任何人都可以免费使用。只需添加下方的 JVM 参数即可，无需任何其他配置。想用自己的域名？请参阅[自行部署](#self-hosting)。
+公共实例已上线：`yggdrasil.alisaqaq.moe`，任何人都可以免费使用，无需任何配置。请从下方选择对应的指南。想用自己的域名？请参阅[自行部署](#self-hosting)。
 :::
 
-## 快速开始 {#quick-start}
+## 使用指南 {#guides}
 
-在 `-jar` 之前添加以下 JVM 参数（Minecraft 1.16+，客户端和服务端均适用）：
-
-```
--Dminecraft.api.auth.host=https://auth.yggdrasil.alisaqaq.moe
--Dminecraft.api.account.host=https://account.yggdrasil.alisaqaq.moe
--Dminecraft.api.session.host=https://session.yggdrasil.alisaqaq.moe
--Dminecraft.api.services.host=https://services.yggdrasil.alisaqaq.moe
--Dminecraft.api.profiles.host=https://profiles.yggdrasil.alisaqaq.moe
-```
-
-单行版本：
-
-```
--Dminecraft.api.auth.host=https://auth.yggdrasil.alisaqaq.moe -Dminecraft.api.account.host=https://account.yggdrasil.alisaqaq.moe -Dminecraft.api.session.host=https://session.yggdrasil.alisaqaq.moe -Dminecraft.api.services.host=https://services.yggdrasil.alisaqaq.moe -Dminecraft.api.profiles.host=https://profiles.yggdrasil.alisaqaq.moe
-```
-
-Velocity 代理只需要：
-
-```
--Dmojang.sessionserver=https://session.yggdrasil.alisaqaq.moe/session/minecraft/hasJoined
-```
-
-## 旧版本（1.7.10 – 1.15）：使用 authlib-injector {#authlib-injector}
-
-1.16 之前的 authlib 把 Mojang 的地址写死在代码里，会忽略上面的参数。这些版本（例如 GT New Horizons 等 1.7.10 整合包）请使用 [authlib-injector](https://github.com/yushijinhun/authlib-injector)，并以 `authlib-injector.yggdrasil.alisaqaq.moe` 作为 API 地址。下载 `authlib-injector.jar` 后，在服务端和/或客户端的 `-jar` 之前加上：
-
-```
--javaagent:authlib-injector.jar=https://authlib-injector.yggdrasil.alisaqaq.moe
-```
-
-该子域名使用 authlib-injector 的 API 结构（`/authserver`、`/sessionserver`、`/api`、`/minecraftservices`），所有请求依然转发给 Mojang。玩家照常使用自己的微软账号；元数据中提供的是 Mojang 自己的签名公钥，因此皮肤和正版验证与原版完全一致。启用访问令牌时，请把令牌附加在地址后：`.../<secret>`。
-
-## 端点列表 {#endpoints}
-
-| 镜像地址 | 上游服务 | JVM 属性 | 说明 |
-| --- | --- | --- | --- |
-| `auth.yggdrasil.alisaqaq.moe` | `authserver.mojang.com` | `minecraft.api.auth.host` | 传统登录；MC 1.20.2 起不再使用 |
-| `account.yggdrasil.alisaqaq.moe` | `api.mojang.com` | `minecraft.api.account.host` | 玩家信息；MC 1.20.3 起不再使用 |
-| `session.yggdrasil.alisaqaq.moe` | `sessionserver.mojang.com` | `minecraft.api.session.host` | 在线模式进服验证 |
-| `services.yggdrasil.alisaqaq.moe` | `api.minecraftservices.com` | `minecraft.api.services.host` | 聊天举报等；自 MC 1.16.4 起 |
-| `profiles.yggdrasil.alisaqaq.moe` | `api.mojang.com` | `minecraft.api.profiles.host` | 玩家信息；自 authlib 7.0.61 起 |
-
-## 工作原理 {#how-it-works}
-
-主机名的第一个标签决定上游服务：对 `session.yggdrasil.alisaqaq.moe/session/minecraft/hasJoined` 的请求会被转发到 `sessionserver.mojang.com/session/minecraft/hasJoined`，路径与查询参数保持不变。未知端点返回 JSON 404；上游失败返回 JSON 502。
+| 指南 | 适用场景 | 子域名 |
+| --- | --- | --- |
+| [Mojang 服务](/zh-cn/yggdrasil/) | Minecraft 1.16+ 客户端与服务端、Velocity | `auth`、`account`、`session`、`services`、`profiles` |
+| [authlib-injector](/zh-cn/authlib-injector/) | Minecraft 1.7.10 – 1.15（例如 GT New Horizons） | `authlib-injector` |
+| [Prism Launcher](/zh-cn/prism-launcher/) | 在 Prism 中加速下载游戏、依赖库和模组加载器 | `prism-meta` |
 
 ## 自行部署 {#self-hosting}
 
@@ -85,6 +45,8 @@ services:
   mojang-yggdrasil-redirect:
     image: ghcr.io/alisaakiron/mojang-yggdrasil-redirect:latest
     restart: unless-stopped
+    environment:
+      - "ENABLE_MODULE=yggdrasil,authlib-injector,prism-meta"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.yggdrasil.rule=Host(`yggdrasil.example.com`) || Host(`*.yggdrasil.example.com`)"
@@ -95,15 +57,19 @@ services:
 
 TLS 证书必须覆盖二级通配符 `*.yggdrasil.example.com`（区域级的通配符证书 `*.example.com` 无法覆盖）——请通过 DNS-01 方式签发，例如添加 `traefik.http.routers.yggdrasil.tls.certresolver=<resolver>`。
 
+每项功能都是一个模块，**所有模块默认关闭**——在 `ENABLE_MODULE` 中以逗号分隔列出需要启用的模块：
+
+| 模块 | 子域名 |
+| --- | --- |
+| [`yggdrasil`](/zh-cn/yggdrasil/) | `auth`、`account`、`session`、`services`、`profiles` |
+| [`authlib-injector`](/zh-cn/authlib-injector/) | `authlib-injector` |
+| [`prism-meta`](/zh-cn/prism-launcher/) | `prism-meta` |
+
+未启用模块的子域名返回 JSON 404；未启用任何模块或模块名写错时，服务会在启动时报错退出。
+
 想让实例只做纯代理？在容器环境中设置 `DISABLE_LANDING_PAGE=1`，基础域名将不再提供任何文档——`/` 会像未知端点一样返回 JSON 404。
 
-想搭建私有实例，可设置 `PROXY_TOKEN=<secret>`（建议使用较长的 URL 安全字符串），并将其作为路径后缀追加到每个参数中——authlib 会在其后拼接请求路径：
-
-```
--Dminecraft.api.session.host=https://session.yggdrasil.example.com/<secret>
-```
-
-代理会校验并移除第一个路径段；令牌错误或缺失时返回与未知端点相同的 JSON 404。`Authorization` 头原样透传，因此需要 Mojang Bearer 令牌的路由不受影响。配置令牌后文档站会自动禁用。令牌包含在请求 URL 中，请勿在反向代理中开启访问日志（参见[隐私](#privacy)）。
+想搭建私有实例，可设置 `PROXY_TOKEN=<secret>`（建议使用较长的 URL 安全字符串）。此后每个请求都必须以令牌作为第一个路径段——各指南中都说明了令牌的位置。代理会校验并移除该路径段；令牌错误或缺失时返回与未知端点相同的 JSON 404。配置令牌后文档站会自动禁用。令牌包含在请求 URL 中，请勿在反向代理中开启访问日志（参见[隐私](#privacy)）。
 
 ## 隐私 {#privacy}
 

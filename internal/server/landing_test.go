@@ -23,6 +23,7 @@ func TestUsageText(t *testing.T) {
 		"-Dminecraft.api.profiles.host=https://profiles.yggdrasil.example.com",
 		"-Dmojang.sessionserver=https://session.yggdrasil.example.com/session/minecraft/hasJoined",
 		"-javaagent:authlib-injector.jar=https://authlib-injector.yggdrasil.example.com",
+		"https://prism-meta.yggdrasil.example.com/",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("usage text missing %q", want)

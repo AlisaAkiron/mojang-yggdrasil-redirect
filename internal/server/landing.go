@@ -32,7 +32,7 @@ func (a *Server) serveRoot(w http.ResponseWriter, r *http.Request) bool {
 		w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 		if r.Method != http.MethodHead {
-			_, _ = w.Write([]byte(renderUsageText(modelFrom(r))))
+			_, _ = w.Write([]byte(renderUsageText(modelFrom(r), a.modules)))
 		}
 		return true
 	}
@@ -56,22 +56,32 @@ func (a *Server) serveRoot(w http.ResponseWriter, r *http.Request) bool {
 	return false
 }
 
-func renderUsageText(m DeploymentModel) string {
+// renderUsageText is the plain-text usage, listing only the enabled modules.
+func renderUsageText(m DeploymentModel, modules map[Module]bool) string {
 	var b strings.Builder
-	b.WriteString("mojang-yggdrasil-redirect\n\n")
-	fmt.Fprintf(&b, "A reverse proxy for the %d Mojang services used by Minecraft (authlib).\n\n", len(Services))
-	b.WriteString("Endpoints:\n")
-	for _, s := range Services {
-		fmt.Fprintf(&b, "  %s -> %s\n", m.ServiceURL(s), Upstreams[s])
+	b.WriteString("mojang-yggdrasil-redirect\n")
+	if modules[ModuleYggdrasil] {
+		fmt.Fprintf(&b, "\nA reverse proxy for the %d Mojang services used by Minecraft (authlib).\n\n", len(Services))
+		b.WriteString("Endpoints:\n")
+		for _, s := range Services {
+			fmt.Fprintf(&b, "  %s -> %s\n", m.ServiceURL(s), Upstreams[s])
+		}
+		b.WriteString("\nUsage (Minecraft client / server, MC 1.16+): add these JVM flags before -jar\n\n")
+		for _, f := range m.Flags {
+			fmt.Fprintf(&b, "  %s\n", f)
+		}
+		fmt.Fprintf(&b, "\nOne-liner:\n\n  %s\n", m.OneLiner)
+		fmt.Fprintf(&b, "\nVelocity:\n\n  %s\n", m.VelocityFlag)
 	}
-	b.WriteString("\nUsage (Minecraft client / server, MC 1.16+): add these JVM flags before -jar\n\n")
-	for _, f := range m.Flags {
-		fmt.Fprintf(&b, "  %s\n", f)
+	if modules[ModuleAuthlibInjector] {
+		b.WriteString("\nOlder versions (pre-1.16, e.g. 1.7.10) via authlib-injector: add before -jar\n\n")
+		fmt.Fprintf(&b, "  %s\n", m.JavaAgentFlag)
 	}
-	fmt.Fprintf(&b, "\nOne-liner:\n\n  %s\n", m.OneLiner)
-	fmt.Fprintf(&b, "\nVelocity:\n\n  %s\n", m.VelocityFlag)
-	b.WriteString("\nOlder versions (pre-1.16, e.g. 1.7.10) via authlib-injector: add before -jar\n\n")
-	fmt.Fprintf(&b, "  %s\n", m.JavaAgentFlag)
+	if modules[ModulePrismMeta] {
+		b.WriteString("\nPrism Launcher with BMCLAPI downloads: in Settings > APIs, set\n\n")
+		fmt.Fprintf(&b, "  Meta URL:      %s\n", m.PrismMetaURL)
+		b.WriteString("  Assets server: https://bmclapi2.bangbang93.com/assets/\n")
+	}
 	return b.String()
 }
 

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"cmp"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -15,6 +16,8 @@ import (
 
 // Config is the runtime configuration, read from the environment in main.
 type Config struct {
+	// Modules is the set of enabled modules; anything absent is disabled.
+	Modules map[Module]bool
 	// ProxyToken makes the instance private: every proxied request must carry
 	// the token as the first path segment, e.g.
 	//   -Dminecraft.api.session.host=https://session.yggdrasil.example.com/<token>
@@ -34,6 +37,8 @@ type Config struct {
 	Transport http.RoundTripper
 	// Upstreams overrides the service upstream URLs (tests).
 	Upstreams map[Service]string
+	// PrismMetaUpstream overrides PrismMetaUpstream (tests).
+	PrismMetaUpstream string
 }
 
 // Server is the HTTP handler: it proxies service subdomains and serves the
@@ -42,8 +47,10 @@ type Server struct {
 	tokenHash      [32]byte
 	tokenEnabled   bool
 	landingEnabled bool
+	modules        map[Module]bool
 	site           *site
 	proxies        map[Service]*httputil.ReverseProxy
+	prismMeta      *httputil.ReverseProxy
 }
 
 func New(cfg Config) (*Server, error) {
@@ -51,6 +58,7 @@ func New(cfg Config) (*Server, error) {
 		tokenEnabled:   cfg.ProxyToken != "",
 		tokenHash:      sha256.Sum256([]byte(cfg.ProxyToken)),
 		landingEnabled: cfg.ProxyToken == "" && !cfg.DisableLandingPage,
+		modules:        cfg.Modules,
 		proxies:        map[Service]*httputil.ReverseProxy{},
 	}
 	upstreams := cfg.Upstreams
@@ -64,6 +72,11 @@ func New(cfg Config) (*Server, error) {
 		}
 		a.proxies[s] = a.newProxy(target, cfg.Transport)
 	}
+	prismTarget, err := url.Parse(cmp.Or(cfg.PrismMetaUpstream, PrismMetaUpstream))
+	if err != nil {
+		return nil, err
+	}
+	a.prismMeta = a.newPrismMetaProxy(prismTarget, cfg.Transport)
 	if a.landingEnabled {
 		if cfg.Site == nil {
 			return nil, errors.New("landing page enabled but no docs site given")
@@ -75,18 +88,28 @@ func New(cfg Config) (*Server, error) {
 
 // ServeHTTP dispatches on the first hostname label: a service subdomain
 // (e.g. session.yggdrasil.alisaqaq.moe) is proxied with its path forwarded
-// as-is, the authlib-injector subdomain routes by path prefix, and anything
-// else is the base domain's landing page. With a proxy token, both kinds of
-// proxy subdomain require it as the first path segment (see stripToken).
+// as-is, the authlib-injector subdomain routes by path prefix, the prism-meta
+// subdomain serves rewritten launcher metadata, and anything else is the base
+// domain's landing page. A subdomain whose module is disabled gets the JSON
+// 404. With a proxy token, every proxy subdomain requires it as the first
+// path segment (see stripToken).
 func (a *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	label, _, _ := strings.Cut(hostname(r.Host), ".")
 	var handler http.HandlerFunc
-	if label == AuthlibInjectorLabel {
-		handler = a.serveAuthlibInjector
-	} else if proxy, ok := a.proxies[Service(label)]; ok {
-		handler = proxy.ServeHTTP
-	} else {
+	var module Module
+	switch proxy, isService := a.proxies[Service(label)]; {
+	case label == AuthlibInjectorLabel:
+		handler, module = a.serveAuthlibInjector, ModuleAuthlibInjector
+	case label == PrismMetaLabel:
+		handler, module = a.prismMeta.ServeHTTP, ModulePrismMeta
+	case isService:
+		handler, module = proxy.ServeHTTP, ModuleYggdrasil
+	default:
 		a.serveLanding(w, r)
+		return
+	}
+	if !a.modules[module] {
+		a.notFound(w)
 		return
 	}
 
